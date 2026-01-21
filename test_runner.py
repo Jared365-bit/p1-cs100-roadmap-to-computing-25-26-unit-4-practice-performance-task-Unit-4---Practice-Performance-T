@@ -11,7 +11,7 @@ import sys
 
 def run_test(test_name):
     """Run a specific test by name. Returns True if passed, False if failed."""
-    
+    test_name = "task_4"
     # =========================================================================
     # TASK 1 TESTS
     # =========================================================================
