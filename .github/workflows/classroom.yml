@@ -1,0 +1,139 @@
+# GitHub Classroom Autograding Workflow
+# Place this file in: .github/workflows/classroom.yml
+
+name: Autograding Tests
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+
+jobs:
+  autograding:
+    name: Run Autograding Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Run All Tests
+        id: tests
+        run: |
+          echo "=========================================="
+          echo "🛒 UNIT 4 PERFORMANCE TASK - AUTOGRADING"
+          echo "=========================================="
+          echo ""
+          
+          # Initialize score tracking
+          TOTAL_POINTS=0
+          EARNED_POINTS=0
+          PASSED_TESTS=0
+          FAILED_TESTS=0
+          RESULTS=""
+          
+          # Function to run a test
+          run_test() {
+            local test_name=$1
+            local points=$2
+            local description=$3
+            TOTAL_POINTS=$((TOTAL_POINTS + points))
+            
+            if python3 test_runner.py "$test_name" 2>&1; then
+              EARNED_POINTS=$((EARNED_POINTS + points))
+              PASSED_TESTS=$((PASSED_TESTS + 1))
+              RESULTS="${RESULTS}✅ ${description} (${points}/${points} pts)\n"
+            else
+              FAILED_TESTS=$((FAILED_TESTS + 1))
+              RESULTS="${RESULTS}❌ ${description} (0/${points} pts)\n"
+            fi
+          }
+          
+          echo "📋 TASK 1: calculate_total (20 points)"
+          echo "----------------------------------------"
+          run_test "task1_normal" 5 "Task 1.1 - Normal cart total"
+          run_test "task1_empty" 5 "Task 1.2 - Empty cart returns 0"
+          run_test "task1_single" 5 "Task 1.3 - Single item"
+          run_test "task1_max_items" 5 "Task 1.4 - max_items slicing"
+          echo ""
+          
+          echo "📋 TASK 2: create_product (25 points)"
+          echo "----------------------------------------"
+          run_test "task2_defaults" 7 "Task 2.1 - Default parameters"
+          run_test "task2_category" 6 "Task 2.2 - Override category"
+          run_test "task2_in_stock" 6 "Task 2.3 - Override in_stock"
+          run_test "task2_all_kwargs" 6 "Task 2.4 - All keyword args"
+          echo ""
+          
+          echo "📋 TASK 3: filter_products (25 points)"
+          echo "----------------------------------------"
+          run_test "task3_filter_under_5" 7 "Task 3.1 - Filter under \$5"
+          run_test "task3_filter_excludes" 6 "Task 3.2 - Filter excludes expensive"
+          run_test "task3_no_matches" 6 "Task 3.3 - No matches returns []"
+          run_test "task3_empty_input" 6 "Task 3.4 - Empty input returns []"
+          echo ""
+          
+          echo "📋 TASK 4: inventory_report (30 points)"
+          echo "----------------------------------------"
+          run_test "task4_total_products" 6 "Task 4.1 - total_products count"
+          run_test "task4_total_value" 8 "Task 4.2 - total_value calculation"
+          run_test "task4_in_stock_count" 6 "Task 4.3 - in_stock_count"
+          run_test "task4_categories" 5 "Task 4.4 - categories set"
+          run_test "task4_empty" 5 "Task 4.5 - Empty list handling"
+          echo ""
+          
+          echo "=========================================="
+          echo "📊 FINAL RESULTS"
+          echo "=========================================="
+          echo -e "$RESULTS"
+          echo "=========================================="
+          echo "Tests Passed: ${PASSED_TESTS}/17"
+          echo "🏆 TOTAL SCORE: ${EARNED_POINTS}/${TOTAL_POINTS} points"
+          echo "=========================================="
+          
+          # Save score for badge/summary
+          echo "earned=${EARNED_POINTS}" >> $GITHUB_OUTPUT
+          echo "total=${TOTAL_POINTS}" >> $GITHUB_OUTPUT
+          echo "passed=${PASSED_TESTS}" >> $GITHUB_OUTPUT
+          
+          # Calculate percentage for grading
+          if [ $TOTAL_POINTS -gt 0 ]; then
+            PERCENTAGE=$((EARNED_POINTS * 100 / TOTAL_POINTS))
+            echo "percentage=${PERCENTAGE}" >> $GITHUB_OUTPUT
+          fi
+          
+          # Fail the workflow if not all tests passed (optional - remove if you want partial credit)
+          # if [ $FAILED_TESTS -gt 0 ]; then
+          #   exit 1
+          # fi
+      
+      - name: Create Summary
+        if: always()
+        run: |
+          echo "## 🛒 Unit 4 Performance Task Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Tests Passed | ${{ steps.tests.outputs.passed }}/17 |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Score** | **${{ steps.tests.outputs.earned }}/${{ steps.tests.outputs.total }}** |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ steps.tests.outputs.earned }}" == "100" ]; then
+            echo "### 🌟 Perfect Score! All tests passed!" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ steps.tests.outputs.earned }}" -ge "80" ]; then
+            echo "### ✨ Great job! Keep refining your solutions." >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ steps.tests.outputs.earned }}" -ge "60" ]; then
+            echo "### 📚 Good progress! Review failing tests." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### 💪 Keep practicing! Check the test output for hints." >> $GITHUB_STEP_SUMMARY
+          fi
